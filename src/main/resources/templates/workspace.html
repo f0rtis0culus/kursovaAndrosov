@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Коворкінги</title>
+</head>
+<body>
+<h1>Управління коворкінгами</h1>
+
+<!-- Створення нового коворкінгу -->
+<h2>Створити коворкінг</h2>
+<form id="createForm">
+    <input type="text" name="name" placeholder="Назва" required>
+    <input type="text" name="location" placeholder="Локація" required>
+    <input type="number" name="capacity" placeholder="Місткість" required>
+    <button type="submit">Створити</button>
+</form>
+
+<!-- Отримати всі коворкінги -->
+<h2>Список коворкінгів</h2>
+<button onclick="fetchAll()">Завантажити всі</button>
+<ul id="workspaceList"></ul>
+
+<!-- Отримати коворкінг за ID -->
+<h2>Отримати коворкінг за ID</h2>
+<input type="number" id="getId" placeholder="ID">
+<button onclick="fetchById()">Отримати</button>
+<pre id="workspaceDetails"></pre>
+
+<!-- Оновити коворкінг -->
+<h2>Оновити коворкінг</h2>
+<form id="updateForm">
+    <input type="number" name="id" placeholder="ID" required>
+    <input type="text" name="name" placeholder="Нова назва" required>
+    <input type="text" name="location" placeholder="Нова локація" required>
+    <input type="number" name="capacity" placeholder="Нова місткість" required>
+    <button type="submit">Оновити</button>
+</form>
+
+<!-- Видалити коворкінг -->
+<h2>Видалити коворкінг</h2>
+<input type="number" id="deleteId" placeholder="ID">
+<button onclick="deleteWorkspace()">Видалити</button>
+
+<script>
+    const API_URL = '/api/workspaces';
+
+    // Створення
+    document.getElementById('createForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+      data.capacity = parseInt(data.capacity);
+
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      alert(res.ok ? 'Створено' : 'Помилка');
+    });
+
+    // Всі коворкінги
+    async function fetchAll() {
+      const res = await fetch(API_URL);
+      const workspaces = await res.json();
+
+      const list = document.getElementById('workspaceList');
+      list.innerHTML = '';
+      workspaces.forEach(ws => {
+        const li = document.createElement('li');
+        li.textContent = `#${ws.id}: ${ws.name} — ${ws.location} (Місткість: ${ws.capacity})`;
+        list.appendChild(li);
+      });
+    }
+
+    // За ID
+    async function fetchById() {
+      const id = document.getElementById('getId').value;
+      const res = await fetch(`${API_URL}/${id}`);
+      const data = await res.json();
+      document.getElementById('workspaceDetails').textContent = JSON.stringify(data, null, 2);
+    }
+
+    // Оновлення
+    document.getElementById('updateForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+      const id = data.id;
+      delete data.id;
+      data.capacity = parseInt(data.capacity);
+
+      const res = await fetch(`${API_URL}/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      alert(res.ok ? 'Оновлено' : 'Помилка');
+    });
+
+    // Видалення
+    async function deleteWorkspace() {
+      const id = document.getElementById('deleteId').value;
+      const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+      alert(res.ok ? 'Видалено' : 'Помилка');
+    }
+</script>
+</body>
+</html>
